@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recommended Doctors</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-image: url("static/last.jpg"); 
+            background-size: cover; 
+            background-repeat: no-repeat; 
+        }
+        .container {
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #ffffffd6;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        button {
+            background-color: #447beb;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: block;
+            margin: 0 auto;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+        }
+        h1 {
+            text-align: center;
+            color: #343a40;
+        }
+        #diseaseInputContainer, #locationInputContainer {
+            padding: 5px;
+            width: 500px;
+            align-items: center;
+            justify-content: space-between;
+        }
+        label {
+            flex: 1;
+            font-size: 16px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        select {
+            width: 50%;
+            padding: 8px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background-color: #fff;
+        }
+
+        select:hover {
+            border-color: #007bff;
+            outline: none;
+        }
+        .doctor-card {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            background-color: #ffffff;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .doctor-info {
+            width: 65%;
+        }
+        .doctor-info h3 {
+            text-align: center;
+            margin: 0 0 10px 0;
+            font-size: 1.5em;
+            color: #007bff;
+            font-weight: bold;
+        }
+        .doctor-info .left, .doctor-info .right {
+            display: inline-block;
+            width: 48%;
+            vertical-align: top;
+        }
+        .doctor-info .left p, .doctor-info .right p {
+            margin: 5px 0;
+            color: #495057;
+        }
+        .doctor-info .left p strong, .doctor-info .right p strong {
+            color: #212529;
+        }
+        .book-button {
+            width: 30%;
+            display: flex;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>Recommended Doctors</h1>
+    <div class="container">
+        <!-- Disease Input -->
+        <div id="diseaseInputContainer">
+            <label for="disease">Disease:</label>
+            <select id="disease">
+                <option value="" disabled selected>Select Disease</option>
+                {% for dis in diseases %}
+                <option value="{{ dis }}" {{ 'selected' if dis == disease else '' }}>{{ dis }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Location Input -->
+        <div id="locationInputContainer">
+            <label for="location">Location:</label>
+            <select id="location">
+                <option value="" disabled selected>Select Location</option>
+                {% for loc in locations %}
+                <option value="{{ loc }}">{{ loc }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Submit Button -->
+        <button id="recommendButton">Find Doctors</button>
+        <h3></h3>
+
+        <!-- Doctor Cards -->
+        <div id="doctorCards"></div>
+    </div>
+
+    <script>
+        document.getElementById("recommendButton").addEventListener("click", () => {
+            const disease = document.getElementById("disease").value.trim();
+            const location = document.getElementById("location").value.trim();
+
+            if (!disease || !location) {
+                alert("Please enter both disease and location.");
+                return;
+            }
+
+            fetch("/recommend", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ disease, location }),
+            })
+                .then(response => response.json())
+                .then(data => {
+                    const doctorCardsContainer = document.getElementById("doctorCards");
+                    doctorCardsContainer.innerHTML = ""; // Clear any existing content
+
+                    if (data.error) {
+                        doctorCardsContainer.innerHTML = `<p>${data.error}</p>`;
+                        return;
+                    }
+
+                    data.forEach(doctor => {
+                        const card = document.createElement("div");
+                        card.classList.add("doctor-card");
+                        card.innerHTML = `
+                            <div class="doctor-info">
+                                <h3>${doctor["Doctor Name"]}</h3>
+                                <div class="left">
+                                    <p><strong>ID:</strong> ${doctor["Doctor ID"]}</p>
+                                    <p><strong>Experience:</strong> ${doctor["Experience (Years)"]} years</p>
+                                    <p><strong>Score:</strong> ${doctor["Score"].toFixed(2)}</p>
+                                    <p><strong>Rating:</strong> ${doctor["Patient Rating"]}</p>
+                                </div>
+                                <div class="right">
+                                    <p><strong>Specialization:</strong> ${doctor.Specialization}</p>
+                                    <p><strong>Availability:</strong> ${doctor.Availability}</p>
+                                    <p><strong>Insurance Accepted:</strong> ${doctor["Insurance Accepted"]}</p>
+                                    <p><strong>Appointment Fee:</strong> ${doctor["Consultation Fee ($)"]}$</p>
+                                </div>
+                            </div>
+                            <div class="book-button">
+                                <button onclick="bookAppointment('${doctor["Doctor Name"]}')">Book Appointment</button>
+                            </div>
+                        `;
+                        doctorCardsContainer.appendChild(card);
+                    });
+                })
+                .catch(error => console.error("Error:", error));
+        });
+
+        function bookAppointment(doctorName) {
+            alert(`Appointment booked with ${doctorName}`);
+        }
+    </script>
+</body>
+</html>

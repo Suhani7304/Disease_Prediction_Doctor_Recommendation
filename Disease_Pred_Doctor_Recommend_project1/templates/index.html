@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Disease Prediction & Doctor Recommendation</title>
+    
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-image: url("static/front.jpg"); 
+            background-size: cover; 
+            background-repeat: no-repeat; 
+            background-position: center;
+        }
+
+        header {
+            color: rgb(0, 0, 0);
+            padding: 1.5rem 0;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 2.2rem;
+            margin: 0;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 2rem auto;
+            max-width: 400px;
+            text-align: center;
+            background: #ffffffba;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            margin-right: 150px;
+            height: 500px;
+        }
+
+        .container h2 {
+            margin-bottom: 1rem;
+            font-size: 1.8rem;
+            color: #0f0f0f;
+        }
+
+        .container p {
+            margin-bottom: 2rem;
+            font-size: 1rem;
+            color: #111111;
+        }
+
+        .button-container {
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .button {
+            padding: 1rem 2rem;
+            font-size: 1rem;
+            color: white;
+            text-decoration: none;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: transform 0.3s, background-color 0.3s;
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+        }
+
+        .button.predict {
+            background: linear-gradient(135deg, #38ecd6, #4992cc);
+        }
+
+        .button.predict:hover {
+            background: linear-gradient(135deg, #20bce8, #2e7cef);
+        }
+
+        .button.recommend {
+            background: linear-gradient(135deg, #22ff92, #187838);
+        }
+
+        .button.recommend:hover {
+            background: linear-gradient(135deg, #50e846, #30a90f);
+        }
+
+        footer {
+            text-align: center;
+            padding: 1rem;
+           
+            color: #000000;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Disease Prediction & Doctor Recommendation</h1>
+    </header>
+    <div class="container">
+        <h2>Welcome to Better Health!</h2>
+        <p>
+            Your ultimate health companion for accurately predicting potential diseases based on your symptoms, offering comprehensive precautionary advice to safeguard your well-being, and seamlessly connecting you with highly trusted doctors in your area for expert care and tailored treatment solutions.Your journey to better health starts here!
+        </p>
+        <div class="button-container">
+            <a href="/predict_disease" class="button predict">Predict Disease</a>
+            <a href="/recommend" class="button recommend">Recommend Doctors</a>
+        </div>
+    </div>
+    <footer>
+        &copy; 2025 Disease Prediction & Doctor Recommendation. All rights reserved.
+    </footer>
+</body>
+</html>

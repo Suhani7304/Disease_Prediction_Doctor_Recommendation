@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Predict Disease</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-image: url("static/middle.jpg"); 
+            background-size: cover; 
+            background-repeat: no-repeat;
+        }
+        h1 {
+            text-align: center;
+        }
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fffffff2;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-height: 540px;
+            overflow-y: auto;
+        }
+        .bot_container {
+            max-width: 1000px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fffffff2;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        input[type="text"] {
+            width: 25%;
+            padding: 10px;
+            border: 1px solid #000000;
+            border-radius: 4px;
+            margin: 0 auto 20px;
+            display: block;
+        }
+        #symptomsList {
+            display: grid;
+            grid-template-columns: repeat(3,2fr);
+            gap: 1px;
+            margin-bottom: 20px;
+        }
+        button {
+            background-color: #447beb;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: block;
+            margin: 0 auto;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <h1>Select Symptoms</h1>
+    <div class="container">
+        <input type="text" id="symptomSearch" placeholder="----Search Symptoms----" onkeyup="filterSymptoms()">
+        <div id="symptomsList"></div>
+    </div>
+    <button onclick="predictDisease()">Predict</button>
+    <div class="bot_container">
+        <div id="result"></div>
+        <div id="precautionDescription"></div>
+    </div>
+    <script>
+        const symptoms = {{ symptoms_list|tojson|safe }};
+
+        function loadSymptoms() {
+            const symptomsListDiv = document.getElementById('symptomsList');
+            symptoms.forEach(symptom => { 
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.value = symptom;
+                checkbox.id = symptom;
+
+                const label = document.createElement('label');
+                label.htmlFor = symptom;
+                label.innerText = symptom;
+
+                const div = document.createElement('div');
+                div.appendChild(checkbox);
+                div.appendChild(label);
+
+                symptomsListDiv.appendChild(div);
+            });
+        }
+
+        const selectedSymptoms = new Set(); 
+
+        function filterSymptoms() {
+            const searchQuery = document.getElementById('symptomSearch').value.toLowerCase();
+            const symptomsListDiv = document.getElementById('symptomsList');
+            
+            symptomsListDiv.innerHTML = '';
+
+            symptoms
+                .filter(symptom => symptom.toLowerCase().includes(searchQuery))
+                .forEach(symptom => {
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.value = symptom;
+                    checkbox.id = symptom;
+
+                    // Restore the checked state from the persistent set
+                    if (selectedSymptoms.has(symptom)) {
+                        checkbox.checked = true;
+                    }
+
+                    // Update the selectedSymptoms set when the checkbox is toggled
+                    checkbox.addEventListener('change', () => {
+                        if (checkbox.checked) {
+                            selectedSymptoms.add(symptom);
+                        } else {
+                            selectedSymptoms.delete(symptom);
+                        }
+                    });
+
+                    const label = document.createElement('label');
+                    label.htmlFor = symptom;
+                    label.innerText = symptom;
+
+                    const div = document.createElement('div');
+                    div.appendChild(checkbox);
+                    div.appendChild(label);
+
+                    symptomsListDiv.appendChild(div);
+                });
+        }
+
+        function predictDisease() {
+            const selectedSymptoms = Array.from(document.querySelectorAll('#symptomsList input[type="checkbox"]:checked'))
+                                          .map(checkbox => checkbox.value);
+
+            fetch('/predict_disease', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ symptoms: selectedSymptoms }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                const resultDiv = document.getElementById('result');
+                resultDiv.innerHTML = '<h2>Predicted Diseases</h2>';
+                data.top_diseases.forEach((item, index) => {
+                    resultDiv.innerHTML += `<p>${index + 1}. ${item.disease} - ${item.probability}%</p>`;
+                });
+
+                // Get only the top 2 diseases
+                const top2Diseases = data.top_diseases.slice(0, 2).map(d => d.disease);
+
+                // Add the "Show Precaution and Description" button
+                const precautionButton = document.createElement('button');
+                precautionButton.innerText = 'Show Precaution and Description';
+                precautionButton.onclick = () => getPrecautionDescription(top2Diseases);
+                resultDiv.appendChild(precautionButton);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+
+        function getPrecautionDescription(topDiseases) {
+            fetch('/get_precaution_description', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ top_diseases: topDiseases }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                const precautionDiv = document.getElementById('precautionDescription');
+                precautionDiv.innerHTML = '<h2>Precautions and Descriptions</h2>';
+                data.forEach(item => {
+                    precautionDiv.innerHTML += `
+                        <div>
+                            <h3>${item.disease}</h3>
+                            <p><strong>Description:</strong> ${item.description}</p>
+                            <p><strong>Precautions:</strong> ${item.precautions.join(', ')}</p>
+                            <button onclick="window.location.href='/recommend?disease=${encodeURIComponent(item.disease)}'">Recommend Doctors</button>
+                        </div>
+                    `;
+                });
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+
+        window.onload = loadSymptoms;
+    </script>
+</body>
+</html>
